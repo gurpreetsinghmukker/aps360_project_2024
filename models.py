@@ -122,7 +122,7 @@ class GTZANContrastiveModel(nn.Module):
         self.fc1 = nn.Linear(6656, 512)
 
         self.fc2 = nn.Linear(512, contrastive_dim)
-        self.name = f"GTZANContrastiveModel_({self.kernel_size})"
+        self.name = f"GTZANContrastiveModel_CONT_DIM({contrastive_dim})_({self.kernel_size})"
 
     def forward(self, x):
         x = self.conv_layers(x)
@@ -168,7 +168,7 @@ class GTZANContrastiveModelLarge(nn.Module):
         )
 
         self.projective_head = nn.Linear(1024, contrastive_dim)
-        self.name = f"GTZANContrastiveModelLarge_({self.kernel_size})"
+        self.name = f"GTZANContrastiveModelLarge_CONT_DIM({contrastive_dim})_({self.kernel_size})"
 
 
     def forward(self, x):

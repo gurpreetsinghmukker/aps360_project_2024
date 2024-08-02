@@ -12232,3 +12232,7 @@ output/contrastive_random_forest/fold_2/model.pkl
 output/contrastive_random_forest/fold_3/model.pkl
 output/contrastive_random_forest/fold_4/model.pkl
 output/contrastive_random_forest/fold_5/model.pkl
+output/barlow_contrastive/BarlowTwinContrastive_CONT_DIM(128)_KS(3)_LR(0.001)_BS(128)_best.pth
+output/barlow_contrastive/BarlowTwinContrastive_CONT_DIM(128)_KS(3)_LR(0.001)_BS(256)_best.pth
+output/barlow_contrastive/GTZANContrastiveModelLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(128)_best.pth
+output/contrastive/GTZANContrastiveModelLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(128)_best.pth

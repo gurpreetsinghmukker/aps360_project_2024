@@ -17,9 +17,6 @@ def print_profile(vars, k):
     for key, value in vars.items():
         print(f"{key}: {value}")
         
-    
-    
-
 
 def train_barlow_contrastive_model(model, train_loader, val_loader, epochs, lr, output_dir: Path, t_loss_history=None, v_loss_history=None, checkpoint_file=None, device= 'cpu'):
     time_start = time.time()
