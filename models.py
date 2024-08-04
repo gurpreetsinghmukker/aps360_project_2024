@@ -176,7 +176,13 @@ class GTZANContrastiveModelLarge(nn.Module):
         x = self.backbone(x)
         x = self.projective_head(x)
         x1, x2 = torch.split(x, x.shape[0] // 2, dim=0)
+        print(x1.shape)
+        print(x2.shape)
         return(x1, x2)
+        
+    def inference(self, x):
+        return self.projective_head(self.backbone(x))
+            
 
 # Construct a new model that has the contrastive embedding model as a frozen base
 class ContrastiveClassificationModel(nn.Module):
@@ -203,15 +209,16 @@ class ContrastiveClassificationModel_2(nn.Module):
         # Freeze the base model
         for param in self.base_model.parameters():
             param.requires_grad = False
-        self.fc1 = nn.Linear(embedding_dim, embedding_dim//2)
-        self.fc2 = nn.Linear(embedding_dim//2, num_classes)
+        self.fc1 = nn.Linear(embedding_dim, embedding_dim)
+        self.fc2 = nn.Linear(embedding_dim, num_classes)
 
     def forward(self, x):
-        x = self.base_model(x)
+        x = self.base_model.inference(x)
         x = self.fc1(x)
         x = F.relu(x)
         x = self.fc2(x) 
         return x
+    
 
 
 class BarlowTwinContrastive(nn.Module):
@@ -251,8 +258,14 @@ class BarlowTwinContrastive(nn.Module):
         self.name = f"BarlowTwinContrastive_CONT_DIM({contrastive_dim})_KS({self.kernel_size})"
 
     def forward(self, x):
+            
         x1 = x[0]
         x2 = x[1]
         z1 = self.projective_head(self.backbone(x1))
         z2 = self.projective_head(self.backbone(x2))
+        print(z1.shape)
+        print(z2.shape)
         return z1,z2
+        
+    def inference(self, x):
+        return self.projective_head(self.backbone(x))

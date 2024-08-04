@@ -60,7 +60,7 @@ def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_s
             mel_spectrogram1 = mel_spectrogram1.to(device)
             mel_spectrogram2 = mel_spectrogram2.to(device)
             mel_spectrogram = [mel_spectrogram1, mel_spectrogram2]
-            # Stack the spectrograms along the batch dimension
+            # `Stack the spectrograms along the batch dimension
             # mel_spectrogram = torch.cat([mel_spectrogram1, mel_spectrogram2], dim=0)
 
             # print(mel_spectrogram.shape)
