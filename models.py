@@ -170,14 +170,52 @@ class GTZANContrastiveModelLarge(nn.Module):
         self.projective_head = nn.Linear(1024, contrastive_dim)
         self.name = f"GTZANContrastiveModelLarge_CONT_DIM({contrastive_dim})_({self.kernel_size})"
 
+class GTZANContrastiveModelXLarge(nn.Module):
+    def __init__(self, contrastive_dim=128):
+        super(GTZANContrastiveModelXLarge, self).__init__()
+        self.name = "GTZANContrastiveModelXLarge"
+        self.relu = nn.ReLU()
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.dropout = nn.Dropout(p=0.5)
+        self.kernel_size = 3
+
+        self.conv_layers = []
+        self.conv1 = nn.Conv2d(1, 32, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv1, self.relu, nn.BatchNorm2d(32)])
+        self.conv2 = nn.Conv2d(32, 64, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv2, self.relu, nn.BatchNorm2d(64), self.pool])
+        self.conv3 = nn.Conv2d(64, 128, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv3, self.relu, nn.BatchNorm2d(128), self.pool])
+        self.conv4 = nn.Conv2d(128, 256, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv4, self.relu, nn.BatchNorm2d(256), self.pool])
+        self.conv5 = nn.Conv2d(256, 512, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv5, self.relu, nn.BatchNorm2d(512), self.pool])
+        self.conv6 = nn.Conv2d(512, 1024, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv6, self.relu, nn.BatchNorm2d(1024), self.pool])
+        # self.conv7 = nn.Conv2d(1024, 2048, kernel_size = self.kernel_size, stride=1, padding=1)
+        # self.conv_layers.extend([self.conv5, self.relu, nn.BatchNorm2d(2048), self.pool])
+
+        self.conv_layers = nn.Sequential(*self.conv_layers)
+
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(26624, 1024)
+
+        self.backbone = nn.Sequential(
+            self.conv_layers,
+            self.flatten,
+            self.fc1,
+            self.relu,
+            self.dropout
+        )
+
+        self.projective_head = nn.Linear(1024, contrastive_dim)
+        self.name = f"GTZANContrastiveModelXLarge_CONT_DIM({contrastive_dim})_({self.kernel_size})"
 
     def forward(self, x):
         x = torch.cat(x, dim=0)
         x = self.backbone(x)
         x = self.projective_head(x)
         x1, x2 = torch.split(x, x.shape[0] // 2, dim=0)
-        print(x1.shape)
-        print(x2.shape)
         return(x1, x2)
         
     def inference(self, x):
@@ -196,7 +234,7 @@ class ContrastiveClassificationModel(nn.Module):
         self.fc = nn.Linear(embedding_dim, num_classes)
 
     def forward(self, x):
-        x = self.base_model(x)
+        x = self.base_model.inference(x)
         x = self.fc(x)
         return x
     
@@ -209,14 +247,36 @@ class ContrastiveClassificationModel_2(nn.Module):
         # Freeze the base model
         for param in self.base_model.parameters():
             param.requires_grad = False
-        self.fc1 = nn.Linear(embedding_dim, embedding_dim)
-        self.fc2 = nn.Linear(embedding_dim, num_classes)
+        self.fc1 = nn.Linear(embedding_dim, embedding_dim//2)
+        self.fc2 = nn.Linear(embedding_dim//2, num_classes)
 
     def forward(self, x):
         x = self.base_model.inference(x)
         x = self.fc1(x)
         x = F.relu(x)
         x = self.fc2(x) 
+        return x
+    
+
+class ContrastiveClassificationModel_3(nn.Module):
+    def __init__(self, base_model, num_classes, embedding_dim=128):
+        super(ContrastiveClassificationModel_3, self).__init__()
+        self.name = "ContrastiveClassificationModel_3"
+        self.base_model = base_model
+        # Freeze the base model
+        for param in self.base_model.parameters():
+            param.requires_grad = False
+        self.fc1 = nn.Linear(embedding_dim, embedding_dim*2)
+        self.fc2 = nn.Linear(embedding_dim*2, embedding_dim//2)
+        self.fc3 = nn.Linear(embedding_dim//2, num_classes)
+
+    def forward(self, x):
+        x = self.base_model.inference(x)
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        x = F.relu(x)
+        x = self.fc3(x) 
         return x
     
 
@@ -263,8 +323,6 @@ class BarlowTwinContrastive(nn.Module):
         x2 = x[1]
         z1 = self.projective_head(self.backbone(x1))
         z2 = self.projective_head(self.backbone(x2))
-        print(z1.shape)
-        print(z2.shape)
         return z1,z2
         
     def inference(self, x):
