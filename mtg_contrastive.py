@@ -41,76 +41,6 @@ def get_mel_spectrogram(waveform, sample_rate, n_mels=64, n_fft=1024, hop_len=No
     return spec
 
 
-class AudioProcessor2:
-    def __init__(self, sample_rate, num_workers=None):
-        self.sample_rate = sample_rate
-        self.num_workers = num_workers  # Allow user to specify the number of processes
-
-    def load_n_resample(self, file, result_queue, target_sample_rate):
-        try:
-            waveform, sample_rate = torchaudio.load(file)
-            if sample_rate != target_sample_rate:
-                waveform = torchaudio.functional.resample(waveform, sample_rate, target_sample_rate)
-            result_queue.put(waveform)
-        except Exception as e:
-            print(f"Error processing {file}: {e}")
-            return None
-
-    def multi_process_audio_loading(self, files):
-        processes = []
-        manager = mp.Manager()
-        result_queue = manager.Queue()
-        for file in files:
-            process = mp.Process(target=self.load_n_resample, args=(file,result_queue, self.sample_rate))
-            process.start()
-            processes.append(process)
-            print('here0')
-        for process in processes:
-            print('here')
-            process.join()
-        
-        print('here1')
-        waveforms = []
-        while not result_queue.empty():
-            print('here2')
-            waveform = result_queue.get(timeout=1)
-            if waveform is not None:
-                print('here3')
-                waveforms.append(waveform)
-        return waveforms
-            
-
-
-class AudioProcessor:
-    def __init__(self, sample_rate, num_workers=None):
-        self.sample_rate = sample_rate
-        self.num_workers = num_workers  # Allow user to specify the number of processes
-
-    def load_n_resample(self, file):
-        try:
-            waveform, sample_rate = torchaudio.load(file)
-            if sample_rate != self.sample_rate:
-                waveform = torchaudio.functional.resample(waveform, sample_rate, self.sample_rate)
-            return waveform
-        except Exception as e:
-            print(f"Error processing {file}: {e}")
-            return None
-
-    def multi_process_audio_loading(self, files):
-        waveforms = []
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            # files = [str(file) for file in files]
-            print(files)
-            future_to_file = {executor.submit(self.load_n_resample, str(file)): file for file in files}
-            print('files loaded')
-            for future in as_completed(future_to_file):
-                result = future.result()
-                if result is not None:
-                    waveforms.append(result)
-                    print("Result appended")
-        return waveforms
-
-
 class MTGContrastiveDataset(IterableDataset):
     def __init__(self, audio_folder: Path, sample_rate, window_length_s=10, mask_prob=0, samples_per_file=10, folder_whitelist=None, max_files=None, concurrent_files=1, sample_gap=0):
         logging.info(f"Creating MTGContrastiveDataset with audio_folder: {audio_folder}, sample_rate: {sample_rate}, window_length_s: {window_length_s}, mask_prob: {mask_prob}, samples_per_file: {samples_per_file}, folder_whitelist: {folder_whitelist}")
@@ -190,7 +120,6 @@ class MTGContrastiveDataset(IterableDataset):
             offset_min = max(0, raw_start - max_offset_width)
             offset_max = min(end, raw_start + max_offset_width)
             start = np.random.randint(offset_min, offset_max)
-
             wf1_start = start
             wf1_end = start + window_length
             wf2_start = wf1_end + window_length * self.sample_gap

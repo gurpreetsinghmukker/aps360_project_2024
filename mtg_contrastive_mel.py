@@ -97,7 +97,6 @@ class MTG_Mel_ContrastiveDataset(IterableDataset):
             offset_min = max(0, raw_start - max_offset_width)
             offset_max = min(end, raw_start + max_offset_width)
             start = np.random.randint(offset_min, offset_max)
-
             mel1_start = start
             mel1_end = start + mel_window_length
             mel2_start = mel1_end + mel_window_length * self.sample_gap
@@ -183,7 +182,6 @@ class MTG_Mel_ContrastiveDataset(IterableDataset):
                     mel1, mel2 = next(mel_spects_generator)
                     mels.extend([mel1, mel2])
                 mels = torch.stack(mels)
-                # mels = get_mel_spectrogram(waveforms, self.sample_rate)
                 if self.mask_prob > 0:
                     for i in range(len(mels)):
                         if np.random.rand() < self.mask_prob:

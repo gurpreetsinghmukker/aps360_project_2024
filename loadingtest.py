@@ -57,4 +57,9 @@ if __name__ == "__main__":
         mtg_mel_path.mkdir(exist_ok=True)
     
     copy_folder_structure(mtg_path, mtg_mel_path)
-    mp3_to_mel(mtg_path, mtg_mel_path)    
+    mp3_to_mel(mtg_path, mtg_mel_path)
+
+        
+    
+    
+    
