@@ -248,3 +248,6 @@ output/barlow_contrastive/BarlowTwinContrastive_CONT_DIM(128)_KS(3)_LR(0.001)_BS
 output/barlow_contrastive/BarlowTwinContrastive_CONT_DIM(128)_KS(3)_LR(0.001)_BS(128).pkl
 output/contrastive/GTZANContrastiveModelLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(32).pkl
 output/contrastive/GTZANContrastiveModelLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(128).pkl
+output/contrastive/GTZANContrastiveModelLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(256)_best.pth
+output/contrastive/GTZANContrastiveModelXLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(512)_best.pth
+output/contrastive/GTZANContrastiveModelXLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(512).pkl
