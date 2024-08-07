@@ -391,7 +391,7 @@ def plot_losses(t_loss, v_loss):
     plt.show()
 
 # %%
-model = GTZANContrastiveModelLarge(128)
+model = GTZANContrastiveModelXLarge(128)
 criterion = InfoNCE()
 output_dir = contrastive_output_dir
 batch_size = 512
