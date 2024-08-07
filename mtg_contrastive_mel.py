@@ -173,7 +173,7 @@ class MTG_Mel_ContrastiveDataset(IterableDataset):
         start_file_idx = 0
         while start_file_idx < len(all_files):
             cur_files = all_files[start_file_idx:start_file_idx+self.concurrent_files]
-            mel_spects = [torch.load(file) for file in cur_files]
+            mel_spects = [torch.load(file, weights_only= True) for file in cur_files]
             mel_spects_generators = [self.mel_iterator(mel_spect, ) for mel_spect in mel_spects]
 
             for batch in range(self.samples_per_file):
