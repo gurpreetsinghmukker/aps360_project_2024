@@ -361,10 +361,10 @@ if __name__ == '__main__':
     mtg_dataset = MTG_Mel_ContrastiveDataset(mtg_mel_path, references_sample_rate, mask_prob=0)
     print(f"Dataset size: {len(mtg_dataset)}")
     
-    model = GTZANContrastiveModelXLarge(128)
+    model = GTZANContrastiveModelLarge(128)
     criterion = InfoNCE()
     output_dir = contrastive_output_dir
-    batch_size = 512
+    batch_size = 256
     learning_rate = 0.001
     epochs = 25
     train_model_with_params(batch_size=batch_size, learning_rate=learning_rate, epochs = epochs, model=model, output_dir = output_dir, criterion = criterion )
