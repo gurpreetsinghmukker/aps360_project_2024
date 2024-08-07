@@ -169,6 +169,17 @@ class GTZANContrastiveModelLarge(nn.Module):
 
         self.projective_head = nn.Linear(1024, contrastive_dim)
         self.name = f"GTZANContrastiveModelLarge_CONT_DIM({contrastive_dim})_({self.kernel_size})"
+    
+    def forward(self, x):
+        x = torch.cat(x, dim=0)
+        x = self.backbone(x)
+        x = self.projective_head(x)
+        x1, x2 = torch.split(x, x.shape[0] // 2, dim=0)
+        return(x1, x2)
+    
+    def inference(self, x):
+        return self.projective_head(self.backbone(x))
+            
 
 class GTZANContrastiveModelXLarge(nn.Module):
     def __init__(self, contrastive_dim=128):
