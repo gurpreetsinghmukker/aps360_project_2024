@@ -253,3 +253,4 @@ output/contrastive/GTZANContrastiveModelXLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(51
 output/contrastive/GTZANContrastiveModelXLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(512).pkl
 output/contrastive/GTZANContrastiveModelLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(256).pkl
 output/best.pth
+output/2024_08_08_00_34_09/GTZANContrastiveModelLarge_CONT_DIM(128)_(3)_LR(0.001)_BS(256)_(2024_08_08_00_34_09)_best.pth

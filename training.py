@@ -1,5 +1,4 @@
-
-import os
+import argparse
 from pathlib import Path
 import torch
 from pathlib import Path
@@ -11,10 +10,12 @@ from transform_utilities import *
 from visualization_utilities import *
 from gtzan_dataset import *
 from models import *
-from mtg_contrastive import MTGContrastiveDataset
-from mtg_contrastive_mel import MTG_Mel_ContrastiveDataset, worker_init_fn
+# from mtg_contrastive import MTGContrastiveDataset
+# from mtg_contrastive_mel import MTG_Mel_ContrastiveDataset, worker_init_fn
+# from mtg_contrastive_mel_2 import MTG_Mel_ContrastiveDataset, worker_init_fn
 from infonce_loss import InfoNCE
 from barlow_twin_loss import BarlowTwinsLoss
+from datetime import datetime
 
 def train_base_gtzan_classifier(model, train_loader, val_loader, epochs, learning_rate, output_dir: Path):
     np.random.seed(SEED)
@@ -75,8 +76,8 @@ def train_base_gtzan_classifier(model, train_loader, val_loader, epochs, learnin
     return t_loss_history, v_loss_history, v_acc_history
 
 
-def get_model_name(model_name, lr, batch_size):
-    return f"{model_name}_LR({lr})_BS({batch_size})"
+def get_model_name(model_name, lr, batch_size, special_string):
+    return f"{model_name}_LR({lr})_BS({batch_size})_({special_string})"
 
 def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_size, criterion, output_dir: Path, t_loss_history=None, v_loss_history=None, checkpoint_file=None, device = None):
     np.random.seed(SEED)
@@ -203,7 +204,7 @@ def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_s
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                torch.save(model.state_dict(), output_dir / f"{get_model_name(model.name, lr, batch_size)}_best.pth")
+                torch.save(model.state_dict(), output_dir / f"{get_model_name(model.name, lr, batch_size, special_string= output_dir.name)}_best.pth")
 
             # Save the latest model
             save_data = {
@@ -216,7 +217,7 @@ def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_s
                 "t_loss_history": t_loss_history,
                 "v_loss_history": v_loss_history
             }
-            torch.save(save_data, output_dir / f"{get_model_name(model.name, lr, batch_size)}_latest_checkpoint.pth")
+            torch.save(save_data, output_dir / f"{get_model_name(model.name, lr, batch_size, special_string= output_dir.name)}_latest_checkpoint.pth")
         
         print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_train_loss.item():.4f} | Val Loss: {val_loss.item():.4f}")
 
@@ -233,18 +234,18 @@ def train_model_with_params(batch_size, learning_rate, epochs, criterion, model,
     learning_rate = learning_rate
 
     # Using the MTG Dataset
-    train_folders = [
-        "00", "01", "02", "03",
-        "04", "05", "06", "07",
-        "08", "09", "10", "11",
-        "12", "13", "14", "15",
-        "16", "17", "18", "19", 
-        "21", "22", "23", "24",
-        "25", "26", "27", "28",
-        "29", "30"
-    ]
+    # train_folders = [
+    #     "00", "01", "02", "03",
+    #     "04", "05", "06", "07",
+    #     "08", "09", "10", "11",
+    #     "12", "13", "14", "15",
+    #     "16", "17", "18", "19", 
+    #     "21", "22", "23", "24",
+    #     "25", "26", "27", "28",
+    #     "29", "30"
+    # ]
     
-    # train_folders = ["00"]
+    train_folders = ["00"]
     
     val_folders = [
         "20"
@@ -261,7 +262,7 @@ def train_model_with_params(batch_size, learning_rate, epochs, criterion, model,
 
 
     USE_LATEST_CHECKPOINT = True
-    checkpoint_file = output_dir / f'{get_model_name(contrastive_embedder_model.name, learning_rate, batch_size)}_latest_checkpoint.pth' if USE_LATEST_CHECKPOINT else None
+    checkpoint_file = output_dir / f'{get_model_name(contrastive_embedder_model.name, learning_rate, batch_size, special_string= output_dir.name)}_latest_checkpoint.pth' if USE_LATEST_CHECKPOINT else None
     if checkpoint_file is not None and not checkpoint_file.exists():
         print(f"Checkpoint file {checkpoint_file} not found, starting with a fresh model")
         checkpoint_file = None
@@ -279,10 +280,10 @@ def train_model_with_params(batch_size, learning_rate, epochs, criterion, model,
         device = device
     )
     
-    losses = {'train_loss': t_loss, 'val_loss': v_loss}
-    with open(output_dir / f'{get_model_name(contrastive_embedder_model.name, learning_rate, batch_size)}.pkl', 'wb') as file:
-        pickle.dump(losses, file)
-    return
+    # losses = {'train_loss': t_loss, 'val_loss': v_loss}
+    # with open(output_dir / f'{get_model_name(contrastive_embedder_model.name, learning_rate, batch_size)}.pkl', 'wb') as file:
+    #     pickle.dump(losses, file)
+    # return
 
 
 
@@ -301,6 +302,16 @@ def plot_losses(t_loss, v_loss):
 
 if __name__ == '__main__':
     
+    parser = argparse.ArgumentParser(description='Train a contrastive model on the MTG dataset')
+    parser.add_argument('-b', '--batch_size', type=int, default=256, help='Batch size for training')
+    parser.add_argument('-l','--learning_rate', type=float, default=0.001, help='Learning rate for training')
+    parser.add_argument('-e','--epochs', type=int, default=25, help='Number of epochs for training')
+    parser.add_argument('-mo','--model', type=str, default='GTZANContrastiveModelLarge', help='Model to use for training the contrastive model (GTZANContrastiveModelXLarge, GTZANContrastiveModelLarge, GTZANContrastiveModelMedium, GTZANContrastiveModelSmall)')
+    parser.add_argument('-me', "--mel_augment_type", type=int, default=1, help="Type of mel spectrogram augmentation to use (1, 2, 3)")
+    args = parser.parse_args()
+    
+    arg_dict = vars(args)
+        
     output_dir = Path('output')
     output_dir.mkdir(exist_ok=True)
     if torch.cuda.is_available():
@@ -319,52 +330,37 @@ if __name__ == '__main__':
     torch.manual_seed(SEED)
 
 
-    # Path for the deep model trained end to end on GTZAN
-    deep_base_output_dir = output_dir / 'base_gtzan'
-    deep_base_output_dir.mkdir(exist_ok=True)
-
     # Define the path for the checkpoints for the pretrained contrastive model
-    contrastive_output_dir = output_dir / 'contrastive'
+    now = datetime.now()
+    dir_name = now.strftime("%Y_%m_%d_%H_%M_%S")
+    contrastive_output_dir = output_dir / dir_name
     contrastive_output_dir.mkdir(exist_ok=True)
-
-    # Define the path for the checkpoints for the pretrained barlow model
-    barlow_contrastive_output_dir = output_dir / 'barlow_contrastive'
-    barlow_contrastive_output_dir.mkdir(exist_ok=True)
-
-    # Path for the mlp that accepts the embeddings (un-normalized) from the contrastive model
-    contrastive_classifier_output_dir = output_dir / 'contrastive_classifier'
-    contrastive_classifier_output_dir.mkdir(exist_ok=True)
-
-    # Path for the mlp that accepts the logits from the contrastive model
-    contrastive_classifier_embedder_only_output_dir = output_dir / 'contrastive_classifier_embedder_only'
-    contrastive_classifier_embedder_only_output_dir.mkdir(exist_ok=True)
-
-    # Path for the mlp that accepts the embeddings (normalized) from the barlow model
-    contrastive_classifier_barlow_output_dir = output_dir / 'contrastive_classifier_barlow'
-    contrastive_classifier_barlow_output_dir.mkdir(exist_ok=True)
-
-    # Path for the mlp that accepts the logits from the barlow model
-    contrastive_classifier_barlow_embedder_only_output_dir = output_dir / 'contrastive_classifier_barlow_embedder_only'
-    contrastive_classifier_barlow_embedder_only_output_dir.mkdir(exist_ok=True)
-
-    # Path for baseline random forest
-    baseline_random_forest_output_dir = output_dir / 'baseline_random_forest'
-    baseline_random_forest_output_dir.mkdir(exist_ok=True)
-
-    # Path for the random forest that uses contrastive embeddings
-    contrastive_random_forest_output_dir = output_dir / 'contrastive_random_forest'
-    contrastive_random_forest_output_dir.mkdir(exist_ok=True)
-
+    
 
     references_sample_rate = 22050
     mtg_mel_path = mtg_path = Path('') / 'mtg_mel'
-    mtg_dataset = MTG_Mel_ContrastiveDataset(mtg_mel_path, references_sample_rate, mask_prob=0)
-    print(f"Dataset size: {len(mtg_dataset)}")
+    
+    if arg_dict['model'] == 'GTZANContrastiveModelLarge':
+        model = GTZANContrastiveModelLarge(128)
+    elif arg_dict['model'] == 'GTZANContrastiveModelXLarge':
+        model = GTZANContrastiveModelXLarge(128)
+    else:
+        raise ValueError("Invalid model name")    
     
     model = GTZANContrastiveModelLarge(128)
     criterion = InfoNCE()
-    output_dir = contrastive_output_dir
-    batch_size = 256
-    learning_rate = 0.001
-    epochs = 25
-    train_model_with_params(batch_size=batch_size, learning_rate=learning_rate, epochs = epochs, model=model, output_dir = output_dir, criterion = criterion )
+    model_output_dir = contrastive_output_dir
+    batch_size = arg_dict['batch_size']
+    learning_rate = arg_dict['learning_rate']
+    epochs = arg_dict['epochs']
+    
+    if arg_dict["mel_augment_type"] == 1:
+        from mtg_contrastive_mel import MTG_Mel_ContrastiveDataset
+    elif arg_dict["mel_augment_type"] == 2:
+        from mtg_contrastive_mel_2 import MTG_Mel_ContrastiveDataset
+    elif arg_dict["mel_augment_type"] == 3:
+        from mtg_contrastive_mel_3 import MTG_Mel_ContrastiveDataset
+    else:
+        raise ValueError("Invalid mel augment type")
+        
+    train_model_with_params(batch_size=batch_size, learning_rate=learning_rate, epochs = epochs, model=model, output_dir = model_output_dir, criterion = criterion )
