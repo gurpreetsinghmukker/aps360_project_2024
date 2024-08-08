@@ -123,6 +123,7 @@ class GTZANContrastiveModel(nn.Module):
 
         self.fc2 = nn.Linear(512, contrastive_dim)
         self.name = f"GTZANContrastiveModel_CONT_DIM({contrastive_dim})_({self.kernel_size})"
+        self.size = f"Small"
 
     def forward(self, x):
         x = self.conv_layers(x)
@@ -136,7 +137,6 @@ class GTZANContrastiveModel(nn.Module):
 class GTZANContrastiveModelLarge(nn.Module):
     def __init__(self, contrastive_dim=128):
         super(GTZANContrastiveModelLarge, self).__init__()
-        self.name = "GTZANContrastiveModelLarge"
         self.relu = nn.ReLU()
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.dropout = nn.Dropout(p=0.5)
@@ -169,6 +169,8 @@ class GTZANContrastiveModelLarge(nn.Module):
 
         self.projective_head = nn.Linear(1024, contrastive_dim)
         self.name = f"GTZANContrastiveModelLarge_CONT_DIM({contrastive_dim})_({self.kernel_size})"
+        self.size = f"Large"
+        
     
     def forward(self, x):
         x = torch.cat(x, dim=0)
@@ -221,6 +223,7 @@ class GTZANContrastiveModelXLarge(nn.Module):
 
         self.projective_head = nn.Linear(1024, contrastive_dim)
         self.name = f"GTZANContrastiveModelXLarge_CONT_DIM({contrastive_dim})_({self.kernel_size})"
+        self.size = f"XLarge"
 
     def forward(self, x):
         x = torch.cat(x, dim=0)

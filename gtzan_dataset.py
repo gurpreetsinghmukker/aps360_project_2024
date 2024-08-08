@@ -92,7 +92,7 @@ class GTZANDataset(Dataset):
             waveform, mel_spectrogram = self.process_waveform(waveform)
             return waveform, mel_spectrogram, genre
 
-def gtzan_generate_folds(audio_tensors, genres, reference_sample_rate, k_folds=5, mask_prob=0, contrastive=False):
+def gtzan_generate_folds(audio_tensors, genres, reference_sample_rate, k_folds=5, mask_prob=0.0, contrastive=False):
     """
     Defines a generator that yields train and val datasets for each fold.
     """
