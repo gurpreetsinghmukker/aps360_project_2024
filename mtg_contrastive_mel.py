@@ -40,6 +40,7 @@ class MTG_Mel_ContrastiveDataset(IterableDataset):
     def __init__(self, mel_spect_folder: Path, sample_rate, window_length_s=10, mask_prob=0, samples_per_file=10, folder_whitelist=None, max_files=None, concurrent_files=1, sample_gap=0):
         print("Using MTGContrastiveDataset")
         logging.info(f"Creating MTGContrastiveDataset with audio_folder: {mel_spect_folder}, sample_rate: {sample_rate}, window_length_s: {window_length_s}, mask_prob: {mask_prob}, samples_per_file: {samples_per_file}, folder_whitelist: {folder_whitelist}")
+        self.type = 1
         self.mel_spect_folder = mel_spect_folder
         self.sample_rate = sample_rate
         self.window_length_s = window_length_s
@@ -191,6 +192,7 @@ class MTG_Mel_ContrastiveDataset2(IterableDataset):
     def __init__(self, mel_spect_folder: Path, sample_rate, window_length_s=10, mask_prob=0, samples_per_file=10, folder_whitelist=None, max_files=None, concurrent_files=1, sample_gap=0):
         print("Using MTG_Mel_ContrastiveDataset2")
         logging.info(f"Creating MTGContrastiveDataset2 with audio_folder: {mel_spect_folder}, sample_rate: {sample_rate}, window_length_s: {window_length_s}, mask_prob: {mask_prob}, samples_per_file: {samples_per_file}, folder_whitelist: {folder_whitelist}")
+        self.type = 2
         self.mel_spect_folder = mel_spect_folder
         self.sample_rate = sample_rate
         self.window_length_s = window_length_s
@@ -339,6 +341,7 @@ class MTG_Mel_ContrastiveDataset3(IterableDataset):
     def __init__(self, mel_spect_folder: Path, sample_rate, window_length_s=10, mask_prob=0, samples_per_file=10, folder_whitelist=None, max_files=None, concurrent_files=1, sample_gap=0):
         print("Using MTGContrastiveDataset3")
         logging.info(f"Creating MTGContrastiveDataset3 with audio_folder: {mel_spect_folder}, sample_rate: {sample_rate}, window_length_s: {window_length_s}, mask_prob: {mask_prob}, samples_per_file: {samples_per_file}, folder_whitelist: {folder_whitelist}")
+        self.type = 3
         self.mel_spect_folder = mel_spect_folder
         self.sample_rate = sample_rate
         self.window_length_s = window_length_s

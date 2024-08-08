@@ -1,6 +1,7 @@
-import os
+import argparse
 from pathlib import Path
 from pyexpat import model
+from matplotlib.layout_engine import ConstrainedLayoutEngine
 from sympy import plot
 import torch
 import torchaudio
@@ -17,6 +18,9 @@ from mtg_contrastive import MTGContrastiveDataset
 from mtg_contrastive_mel import MTG_Mel_ContrastiveDataset, worker_init_fn
 from infonce_loss import InfoNCE
 from barlow_twin_loss import BarlowTwinsLoss
+import logging
+
+
 
 
 def gtzan_audio_tensors(dataset_path):
@@ -120,8 +124,8 @@ def train_base_gtzan_classifier(model, train_loader, val_loader, epochs, learnin
 
     return t_loss_history, v_loss_history, v_acc_history
 
-def get_model_name(model_name, lr, batch_size):
-    return f"{model_name}_LR({lr})_BS({batch_size})"
+def get_model_name(model_name, lr, batch_size, dataset_type):
+    return f"{model_name}_LR({lr})_BS({batch_size})_DT({dataset_type})"
 
 def generate_gtzan_loaders(audio_tensors, genres, references_sample_rate, batch_size, mask_prob=0.8):
     # Return to the original dataset to train the classifier
@@ -133,7 +137,7 @@ def generate_gtzan_loaders(audio_tensors, genres, references_sample_rate, batch_
     
     return train_loader, val_loader
 
-def train_classifier(embeddings_model_with_weights, classification_model, num_classes,  train_loader, val_loader, epochs,embeddings_learning_rate, classifier_learning_rate, embeddings_batch_size,  classifier_batch_size, output_dir: Path):
+def train_classifier(embeddings_model_with_weights, classification_model, num_classes,  train_loader, val_loader, epochs, classifier_learning_rate, classifier_batch_size, output_dir: Path):
     np.random.seed(SEED)
     torch.manual_seed(SEED)
     
@@ -142,58 +146,118 @@ def train_classifier(embeddings_model_with_weights, classification_model, num_cl
     
     train_loss, val_loss, val_acc =  train_base_gtzan_classifier(contrastive_classifier, train_loader, val_loader, epochs=epochs, learning_rate=classifier_learning_rate, output_dir=output_dir)
 
-    return train_loss, val_loss, val_acc, embedder_model_with_weights.size+"_"+str(embeddings_learning_rate)+"_"+str(embeddings_batch_size)+"_"+contrastive_classifier.name+"_"+str(classifier_learning_rate)+"_"+str(classifier_batch_size)
+    return train_loss, val_loss, val_acc, embedder_model_with_weights.name+"_"+contrastive_classifier.name+"_"+str(classifier_learning_rate)+"_"+str(classifier_batch_size)
 
 def plot_classifier_train_losses(t_losses, model_names, plot_save_path):
+    
+    legend_nums = np.arange(len(model_names))
     # Plot the training losses
     contrastive_classifier_loss_fig, contrastive_classifier_loss_axs = plt.subplots(1, 1, figsize=(10, 5))
     for i in range(len(t_losses)):
-        contrastive_classifier_loss_axs.plot(*zip(*t_losses[i]), label=f'{model_names[i]}')
-    contrastive_classifier_loss_axs.legend()
+        contrastive_classifier_loss_axs.plot(*zip(*t_losses[i]), label=f'{legend_nums[i]}')
+    contrastive_classifier_loss_axs.legend(loc='lower right')
     contrastive_classifier_loss_axs.set_xlabel('Step')
     contrastive_classifier_loss_axs.set_ylabel('Cross Entropy Loss')
     contrastive_classifier_loss_axs.set_title(f'Training Losses')
     
-    plt.savefig(plot_save_path / 'train_losses.png')
+    i = 0
+    save_file_name_path = plot_save_path / 'train_losses.png'
+    
+    while save_file_name_path.exists():
+        i += 1
+        save_file_name_path = plot_save_path / f'train_losses_{i}.png'
+        
+    logging.info(f"Saving training losses plot to {save_file_name_path}")
+    plt.savefig(save_file_name_path)
     plt.show()
 
 def plot_classifier_val_losses(v_losses, model_names, plot_save_path):
+    
+    legend_nums = np.arange(len(model_names))
     # Plot the validation losses
     contrastive_classifier_loss_fig, contrastive_classifier_loss_axs = plt.subplots(1, 1, figsize=(10, 5))
     for i in range(len(v_losses)):
-        contrastive_classifier_loss_axs.plot(*zip(*v_losses[i]), label=f'{model_names[i]}')
-    contrastive_classifier_loss_axs.legend()
+        contrastive_classifier_loss_axs.plot(*zip(*v_losses[i]), label=f'{legend_nums[i]}')
+    contrastive_classifier_loss_axs.legend(loc='lower right')
     contrastive_classifier_loss_axs.set_xlabel('Step')
     contrastive_classifier_loss_axs.set_ylabel('Cross Entropy Loss')
     contrastive_classifier_loss_axs.set_title(f'Validation Losses')
     
-    plt.savefig(plot_save_path / 'val_losses.png')
+    i = 0
+    save_file_name_path = plot_save_path / 'val_losses.png'
+    
+    while save_file_name_path.exists():
+        i += 1
+        save_file_name_path = plot_save_path / f'val_losses_{i}.png'
+    
+    logging.info(f"Saving validation losses plot to {save_file_name_path}")
+    plt.savefig(save_file_name_path)
     plt.show()
     
-def plot_classifier_accuracy(v_accs, model_names, plot_save_path):
+def plot_classifier_accuracy(v_accs, model_names, plot_save_path):    
+    legend_nums = np.arange(len(model_names))
     contrastive_classifier_acc_fig, contrastive_classifier_acc_axs = plt.subplots(1, 1, figsize=(10, 5))
-
     for i in range(len(v_accs)):
-        contrastive_classifier_acc_axs.plot(*zip(*v_accs[i]), label=f"{model_names[i]}")
+        contrastive_classifier_acc_axs.plot(*zip(*v_accs[i]), label=f"{legend_nums[i]}")
         
-    contrastive_classifier_acc_axs.legend()
+    contrastive_classifier_acc_axs.legend(loc='lower right')
     contrastive_classifier_acc_axs.set_xlabel('Step')
     contrastive_classifier_acc_axs.set_ylabel('Accuracy')
     contrastive_classifier_acc_axs.set_title(f'Classification Accuracies')
     
-    plt.savefig(plot_save_path / 'val_accuracies.png')
+    i = 0
+    save_file_name_path = plot_save_path / 'val_accuracies.png'
+    
+    while save_file_name_path.exists():
+        i += 1
+        save_file_name_path = plot_save_path / f'val_accuracies_{i}.png'
+        
+    logging.info(f"Saving validation accuracies plot to {save_file_name_path}")
+    plt.savefig(save_file_name_path)
     plt.show()
 
+def get_model_paths(folders, output_dir):
+    folders = folders.split(',')
+    model_paths = []
+    for folder in folders:
+        if (output_dir/folder).exists():
+            model_paths.extend(list((output_dir/folder).glob('*_best.pth')))
+    return model_paths
+
+def get_models_and_params(model_paths):
+    #eg model path = output/2024_08_08_01_25_11/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0.001)_BS(256)_DT(3)_best.pth
+    models_with_params = []
+    for model_path in model_paths:
+        model_name = model_path.name.split('_')[:-1]
+        model = {}
+        for param in model_name:
+            idx = param.find('(')
+            key = param[:idx]
+            value = param[idx+1:-1]
+            if key == 'M':
+                if value == 'GTZANContrastiveModelLarge':
+                    model['M'] = GTZANContrastiveModelLarge
+                elif value == 'GTZANContrastiveModelXLarge':
+                    model['M'] = GTZANContrastiveModelXLarge
+            else:
+                model[key] = int(value) if value.isdigit() else float(value)
+                
+        model['path'] = model_path
+        models_with_params.append(model)
+    return models_with_params
+             
+        
 if __name__ == '__main__':
     
-    output_dir = Path('output')
-    output_dir.mkdir(exist_ok=True)
-    
-    contrastive_output_dir = output_dir / 'contrastive'
-    contrastive_output_dir.mkdir(exist_ok=True)
-    
-    plot_output_dir = output_dir / 'plots'
-    plot_output_dir.mkdir(exist_ok=True)
+    parser = argparse.ArgumentParser(description='Train a Classification model on the GTZAN dataset')
+    parser.add_argument('-b', '--batch_size', type=int, default=32, help='Batch size for training')
+    parser.add_argument('-l','--learning_rate', type=float, default=0.001, help='Learning rate for training')
+    parser.add_argument('-e','--epochs', type=int, default=100, help='Number of epochs for training')
+    # parser.add_argument('-mo','--model', type=str, default='GTZANContrastiveModelLarge', help='Model to use for training the contrastive model (GTZANContrastiveModelXLarge, GTZANContrastiveModelLarge, GTZANContrastiveModelMedium, GTZANContrastiveModelSmall)')
+    # parser.add_argument('-me', "--mel_augment_type", type=int, default=1, help="Type of mel spectrogram augmentation to use (1, 2, 3)")
+    parser.add_argument('-f', "--model_folders", type=str, default=None, help="Folders to load the models from") 
+    args = parser.parse_args()
+    arg_dict = vars(args)
     
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -202,6 +266,23 @@ if __name__ == '__main__':
     else:
         device = torch.device("cpu")
     print(f"Using device: {device}")
+
+    # Setup logging
+    logging.basicConfig(filename='dataset.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    
+    output_dir = Path('output')
+    output_dir.mkdir(exist_ok=True)
+    
+    folders = arg_dict['model_folders']
+    model_paths = get_model_paths(folders, output_dir)
+    models = get_models_and_params(model_paths)
+
+    # contrastive_output_dir = output_dir / 'contrastive'
+    # contrastive_output_dir.mkdir(exist_ok=True)
+    
+    plot_output_dir = output_dir / 'plots'
+    plot_output_dir.mkdir(exist_ok=True)
+
 
     p_test = 0.2
     p_train_val = 1 - p_test
@@ -214,35 +295,29 @@ if __name__ == '__main__':
     # Parameters
     # gtzan_train_loader, gtzan_val_loader = generate_gtzan_loaders(audio_tensors, genres, reference_sample_rate, batch_size=32, mask_prob=0.8)
     
-    
-    embeddings_models = [GTZANContrastiveModelLarge, GTZANContrastiveModelXLarge]
     classification_models = [ContrastiveClassificationModel, ContrastiveClassificationModel_2, ContrastiveClassificationModel_3]
-    classifier_learning_rates = [0.001, 0.0001]
-    embeddings_batch_sizes = [256, 512]
+    classifier_learning_rates = [0.001]#, 0.0001]
     epochs = 100
     
-    t_losses, v_losses, v_accs, model_names = [], [], [], []
-    for embeddings_model in embeddings_models:
-        for batch_size in embeddings_batch_sizes:
-            for lr in classifier_learning_rates:
-                for classification_model in classification_models:
-                    #  Load the best contrastive embedding model
-                    embedder_model_with_weights = embeddings_model(128)
-                    model_name = get_model_name(embedder_model_with_weights.name, 0.001, batch_size)
-                    
-                    if (contrastive_output_dir / f'{model_name}_best.pth').exists():    
-                        embedder_model_with_weights.load_state_dict(torch.load(contrastive_output_dir / f'{model_name}_best.pth'))
-                        print(f"Training {model_name}")
-                        gtzan_train_loader, gtzan_val_loader = generate_gtzan_loaders(audio_tensors, genres, reference_sample_rate, batch_size=32, mask_prob=0.8)
-                        t_loss, v_loss, v_acc, model_name = train_classifier(embedder_model_with_weights, classification_model, len(audio_tensors),  gtzan_train_loader, gtzan_val_loader, epochs, 0.001, lr, batch_size, 32, output_dir)
-                        t_losses.append(t_loss)
-                        v_losses.append(v_loss)
-                        v_accs.append(v_acc)
-                        model_names.append(model_name)
-                    else:
-                        print(f"{model_name} does not exist")
-                        
-    plot_classifier_train_losses(t_losses, model_names, plot_output_dir)
-    plot_classifier_val_losses(v_losses, model_names, plot_output_dir)
-    plot_classifier_accuracy(v_accs, model_names, plot_output_dir)
+    t_losses, v_losses, v_accs, legend_names = [], [], [], []
+    for model in models: 
+        for classification_model in classification_models:
+            for classifier_learning_rate in classifier_learning_rates:
+                embedder_model_with_weights = model['M'](model['CONTDIM'])
+                embedder_model_with_weights.load_state_dict(torch.load(model['path']))
+                model_name = get_model_name(embedder_model_with_weights.name, model['LR'], model['BS'], model['DT'])
+                print(f"Training {model_name}")
+                gtzan_train_loader, gtzan_val_loader = generate_gtzan_loaders(audio_tensors, genres, reference_sample_rate, batch_size=32, mask_prob=0.8)
+                t_loss, v_loss, v_acc, legend_name = train_classifier(embedder_model_with_weights, classification_model, len(audio_tensors),  gtzan_train_loader, gtzan_val_loader, epochs, classifier_learning_rate, 32, model['path'].parent)
+                t_losses.append(t_loss)
+                v_losses.append(v_loss)
+                v_accs.append(v_acc)
+                legend_names.append(legend_name)
+
+    for i in range(len(legend_names)):
+        print(f"[{i}]: {legend_names[i]}")
+
+    plot_classifier_train_losses(t_losses, legend_names, plot_output_dir)
+    plot_classifier_val_losses(v_losses, legend_names, plot_output_dir)
+    plot_classifier_accuracy(v_accs, legend_names, plot_output_dir)
     

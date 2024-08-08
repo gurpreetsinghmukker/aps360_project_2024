@@ -122,7 +122,7 @@ class GTZANContrastiveModel(nn.Module):
         self.fc1 = nn.Linear(6656, 512)
 
         self.fc2 = nn.Linear(512, contrastive_dim)
-        self.name = f"GTZANContrastiveModel_CONT_DIM({contrastive_dim})_({self.kernel_size})"
+        self.name = f"M(GTZANContrastiveModel)_CONTDIM({contrastive_dim})_KS({self.kernel_size})"
         self.size = f"Small"
 
     def forward(self, x):
@@ -168,7 +168,7 @@ class GTZANContrastiveModelLarge(nn.Module):
         )
 
         self.projective_head = nn.Linear(1024, contrastive_dim)
-        self.name = f"GTZANContrastiveModelLarge_CONT_DIM({contrastive_dim})_({self.kernel_size})"
+        self.name = f"M(GTZANContrastiveModelLarge)_CONTDIM({contrastive_dim})_KS({self.kernel_size})"
         self.size = f"Large"
         
     
@@ -222,7 +222,7 @@ class GTZANContrastiveModelXLarge(nn.Module):
         )
 
         self.projective_head = nn.Linear(1024, contrastive_dim)
-        self.name = f"GTZANContrastiveModelXLarge_CONT_DIM({contrastive_dim})_({self.kernel_size})"
+        self.name = f"M(GTZANContrastiveModelXLarge)_CONTDIM({contrastive_dim})_KS({self.kernel_size})"
         self.size = f"XLarge"
 
     def forward(self, x):
@@ -329,7 +329,7 @@ class BarlowTwinContrastive(nn.Module):
         )
 
         self.projective_head = nn.Linear(1024, contrastive_dim)
-        self.name = f"BarlowTwinContrastive_CONT_DIM({contrastive_dim})_KS({self.kernel_size})"
+        self.name = f"M(BarlowTwinContrastive)_CONTDIM({contrastive_dim})_KS({self.kernel_size})"
 
     def forward(self, x):
             

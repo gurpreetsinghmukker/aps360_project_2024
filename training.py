@@ -74,8 +74,8 @@ def train_base_gtzan_classifier(model, train_loader, val_loader, epochs, learnin
     return t_loss_history, v_loss_history, v_acc_history
 
 
-def get_model_name(model_name, lr, batch_size, special_string):
-    return f"{model_name}_LR({lr})_BS({batch_size})_({special_string})"
+def get_model_name(model_name, lr, batch_size, dataset_type):
+    return f"{model_name}_LR({lr})_BS({batch_size})_DT({dataset_type})"
 
 def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_size, criterion, output_dir: Path, t_loss_history=None, v_loss_history=None, checkpoint_file=None, device = None):
     np.random.seed(SEED)
@@ -202,7 +202,7 @@ def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_s
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                torch.save(model.state_dict(), output_dir / f"{get_model_name(model.name, lr, batch_size, special_string= output_dir.name)}_best.pth")
+                torch.save(model.state_dict(), output_dir / f"{get_model_name(model.name, lr, batch_size, dataset_type= val_loader.dataset.type )}_best.pth")
 
             # Save the latest model
             save_data = {
@@ -215,7 +215,7 @@ def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_s
                 "t_loss_history": t_loss_history,
                 "v_loss_history": v_loss_history
             }
-            torch.save(save_data, output_dir / f"{get_model_name(model.name, lr, batch_size, special_string= output_dir.name)}_latest_checkpoint.pth")
+            torch.save(save_data, output_dir / f"{get_model_name(model.name, lr, batch_size, dataset_type= val_loader.dataset.type)}_latestcheckpoint.pth")
         
         print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_train_loss.item():.4f} | Val Loss: {val_loss.item():.4f}")
 
@@ -260,7 +260,7 @@ def train_model_with_params(batch_size, learning_rate, epochs, criterion, model,
 
 
     USE_LATEST_CHECKPOINT = True
-    checkpoint_file = output_dir / f'{get_model_name(contrastive_embedder_model.name, learning_rate, batch_size, special_string= output_dir.name)}_latest_checkpoint.pth' if USE_LATEST_CHECKPOINT else None
+    checkpoint_file = output_dir / f'{get_model_name(contrastive_embedder_model.name, learning_rate, batch_size, dataset_type= mtg_val_dataset.type)}_latestcheckpoint.pth' if USE_LATEST_CHECKPOINT else None
     if checkpoint_file is not None and not checkpoint_file.exists():
         print(f"Checkpoint file {checkpoint_file} not found, starting with a fresh model")
         checkpoint_file = None
