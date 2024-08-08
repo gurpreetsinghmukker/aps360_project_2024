@@ -10,9 +10,7 @@ from transform_utilities import *
 from visualization_utilities import *
 from gtzan_dataset import *
 from models import *
-# from mtg_contrastive import MTGContrastiveDataset
-# from mtg_contrastive_mel import MTG_Mel_ContrastiveDataset, worker_init_fn
-# from mtg_contrastive_mel_2 import MTG_Mel_ContrastiveDataset, worker_init_fn
+from mtg_contrastive_mel import MTG_Mel_ContrastiveDataset,MTG_Mel_ContrastiveDataset2, MTG_Mel_ContrastiveDataset3, worker_init_fn
 from infonce_loss import InfoNCE
 from barlow_twin_loss import BarlowTwinsLoss
 from datetime import datetime
@@ -226,7 +224,7 @@ def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_s
             
 
 
-def train_model_with_params(batch_size, learning_rate, epochs, criterion, model, output_dir):
+def train_model_with_params(batch_size, learning_rate, epochs, criterion, model, output_dir, dataset):
     np.random.seed(SEED)
     torch.manual_seed(SEED)
 
@@ -251,8 +249,8 @@ def train_model_with_params(batch_size, learning_rate, epochs, criterion, model,
         "20"
     ]
 
-    mtg_train_dataset = MTG_Mel_ContrastiveDataset(mtg_mel_path, references_sample_rate, mask_prob=0.8, samples_per_file=15, folder_whitelist=train_folders, concurrent_files=batch_size)
-    mtg_val_dataset = MTG_Mel_ContrastiveDataset(mtg_mel_path, references_sample_rate, mask_prob=0.8, samples_per_file=15, folder_whitelist=val_folders, max_files=2*batch_size, concurrent_files=batch_size)
+    mtg_train_dataset = dataset(mtg_mel_path, references_sample_rate, mask_prob=0.8, samples_per_file=15, folder_whitelist=train_folders, concurrent_files=batch_size)
+    mtg_val_dataset = dataset(mtg_mel_path, references_sample_rate, mask_prob=0.8, samples_per_file=15, folder_whitelist=val_folders, max_files=2*batch_size, concurrent_files=batch_size)
 
     train_loader = DataLoader(mtg_train_dataset, batch_size=batch_size, shuffle=False, num_workers=1, prefetch_factor=2)
     val_loader = DataLoader(mtg_val_dataset, batch_size=batch_size, shuffle=False)
@@ -308,6 +306,7 @@ if __name__ == '__main__':
     parser.add_argument('-e','--epochs', type=int, default=25, help='Number of epochs for training')
     parser.add_argument('-mo','--model', type=str, default='GTZANContrastiveModelLarge', help='Model to use for training the contrastive model (GTZANContrastiveModelXLarge, GTZANContrastiveModelLarge, GTZANContrastiveModelMedium, GTZANContrastiveModelSmall)')
     parser.add_argument('-me', "--mel_augment_type", type=int, default=1, help="Type of mel spectrogram augmentation to use (1, 2, 3)")
+    parser.add_argument('-f', "--recovery_folder_name", type=str, default=None, help="Name of the folder to recover the model from") 
     args = parser.parse_args()
     
     arg_dict = vars(args)
@@ -331,11 +330,15 @@ if __name__ == '__main__':
 
 
     # Define the path for the checkpoints for the pretrained contrastive model
-    now = datetime.now()
-    dir_name = now.strftime("%Y_%m_%d_%H_%M_%S")
-    contrastive_output_dir = output_dir / dir_name
-    contrastive_output_dir.mkdir(exist_ok=True)
-    
+    if arg_dict['recovery_folder_name'] is None:
+        now = datetime.now()
+        dir_name = now.strftime("%Y_%m_%d_%H_%M_%S")
+        contrastive_output_dir = output_dir / dir_name
+        contrastive_output_dir.mkdir(exist_ok=True)
+    else:
+        contrastive_output_dir = output_dir / arg_dict['recovery_folder_name']
+        if not contrastive_output_dir.exists():
+            raise ValueError("Recovery folder does not exist")    
 
     references_sample_rate = 22050
     mtg_mel_path = mtg_path = Path('') / 'mtg_mel'
@@ -353,14 +356,14 @@ if __name__ == '__main__':
     batch_size = arg_dict['batch_size']
     learning_rate = arg_dict['learning_rate']
     epochs = arg_dict['epochs']
-    
+    dataset = None
     if arg_dict["mel_augment_type"] == 1:
-        from mtg_contrastive_mel import MTG_Mel_ContrastiveDataset
+        dataset = MTG_Mel_ContrastiveDataset
     elif arg_dict["mel_augment_type"] == 2:
-        from mtg_contrastive_mel_2 import MTG_Mel_ContrastiveDataset
+        dataset = MTG_Mel_ContrastiveDataset2
     elif arg_dict["mel_augment_type"] == 3:
-        from mtg_contrastive_mel_3 import MTG_Mel_ContrastiveDataset
+        dataset = MTG_Mel_ContrastiveDataset3
     else:
         raise ValueError("Invalid mel augment type")
         
-    train_model_with_params(batch_size=batch_size, learning_rate=learning_rate, epochs = epochs, model=model, output_dir = model_output_dir, criterion = criterion )
+    train_model_with_params(batch_size=batch_size, learning_rate=learning_rate, epochs = epochs, model=model, output_dir = model_output_dir, criterion = criterion, dataset=dataset)
