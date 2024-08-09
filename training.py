@@ -112,6 +112,7 @@ def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_s
         recovered_epoch = 0
 
     for epoch in range(recovered_epoch, epochs):
+        print(f"Training epoch {epoch+1}/{epochs}")
         model.train()
 
         train_losses = []
