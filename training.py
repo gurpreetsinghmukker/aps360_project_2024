@@ -143,20 +143,7 @@ def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_s
                 output = model(mel_spectrogram)
                 loss = criterion(output)
                 loss.backward()
-            # mel_spectrogram1 = mel_spectrogram1.to(device)
-            # mel_spectrogram2 = mel_spectrogram2.to(device)
-            # mel_spectrogram = [mel_spectrogram1, mel_spectrogram2]
-            # Stack the spectrograms along the batch dimension
-            # mel_spectrogram = torch.cat([mel_spectrogram1, mel_spectrogram2], dim=0)
 
-            # print(mel_spectrogram.shape)
-
-            # output = model(mel_spectrogram)
-
-            # Split the output into the original batches
-            # output1, output2 = torch.split(output, output.shape[0] // 2, dim=0)
-
-            # loss = criterion(output)
             t_loss_history.append((step, loss_acc))
             train_losses.append(loss_acc)
             
@@ -277,14 +264,6 @@ def train_model_with_params(batch_size, learning_rate, epochs, criterion, model,
         checkpoint_file=checkpoint_file,
         device = device
     )
-    
-    # losses = {'train_loss': t_loss, 'val_loss': v_loss}
-    # with open(output_dir / f'{get_model_name(contrastive_embedder_model.name, learning_rate, batch_size)}.pkl', 'wb') as file:
-    #     pickle.dump(losses, file)
-    # return
-
-
-
 
 def plot_losses(t_loss, v_loss):
     # Plot the losses
@@ -301,12 +280,12 @@ def plot_losses(t_loss, v_loss):
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Train a contrastive model on the MTG dataset')
-    parser.add_argument('-b', '--batch_size', type=int, default=256, help='Batch size for training')
-    parser.add_argument('-l','--learning_rate', type=float, default=0.001, help='Learning rate for training')
-    parser.add_argument('-e','--epochs', type=int, default=25, help='Number of epochs for training')
-    parser.add_argument('-mo','--model', type=str, default='GTZANContrastiveModelLarge', help='Model to use for training the contrastive model (GTZANContrastiveModelXLarge, GTZANContrastiveModelLarge, GTZANContrastiveModelMedium, GTZANContrastiveModelSmall)')
-    parser.add_argument('-me', "--mel_augment_type", type=int, default=1, help="Type of mel spectrogram augmentation to use (1, 2, 3)")
-    parser.add_argument('-f', "--recovery_folder_name", type=str, default=None, help="Name of the folder to recover the model from") 
+    parser.add_argument('-b', '--batch_size', type=int, default=256, help=f'Batch size for training. Default is 256')
+    parser.add_argument('-l','--learning_rate', type=float, default=0.001, help='Learning rate for training. Default is 0.001')
+    parser.add_argument('-e','--epochs', type=int, default=25, help='Number of epochs for training. Default is 25')
+    parser.add_argument('-mo','--model', type=str, default='GTZANContrastiveModelLarge', help='Model to use for training the contrastive model (GTZANContrastiveModelXLarge, GTZANContrastiveModelLarge, GTZANContrastiveModelMedium, GTZANContrastiveModelSmall). Default is GTZANContrastiveModelLarge')
+    parser.add_argument('-me', "--mel_augment_type", type=int, default=1, help="Type of mel spectrogram augmentation to use (1, 2, 3). Default is 1")
+    parser.add_argument('-f', "--recovery_folder_name", type=str, default=None, help="Name of the folder to recover the model from. Default is None, which creates a new folder")
     args = parser.parse_args()
     
     arg_dict = vars(args)

@@ -9,6 +9,7 @@
 
 # Backups of output folders (We commit the main one. Models are small)
 /output_*
+/output/plots
 
 # Checkpoints are too large to store
 *_checkpoint.pth
