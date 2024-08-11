@@ -93,7 +93,7 @@ def train_contrastive_model(model, train_loader, val_loader, epochs, lr, batch_s
 
     if checkpoint_file is not None:
         print(f"Recovering model from {checkpoint_file}")
-        checkpoint = torch.load(checkpoint_file)
+        checkpoint = torch.load(checkpoint_file, )
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         scheduler.load_state_dict(checkpoint["scheduler"])
@@ -330,7 +330,7 @@ if __name__ == '__main__':
     else:
         raise ValueError("Invalid model name")    
     
-    model = GTZANContrastiveModelLarge(128)
+    # model = GTZANContrastiveModelLarge(128)
     criterion = InfoNCE()
     model_output_dir = contrastive_output_dir
     batch_size = arg_dict['batch_size']

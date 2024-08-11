@@ -179,6 +179,7 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+multi_train.ipynb
 mtg_mel/00.tar
 mtg_flac/00/1100.low.flac
 mtg_flac/00/1100.low.pkl
@@ -262,3 +263,9 @@ output/2024_08_08_01_25_11/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0
 output/2024_08_08_01_25_11/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0.001)_BS(256)_DT(3)_latestcheckpoint.pth
 output/2024_08_08_10_53_58/best.pth
 output/2024_08_08_10_53_58/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0.001)_BS(256)_DT(2)_best.pth
+output/2024_08_09_01_58_26/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0.001)_BS(256)_DT(1)_best.pth
+output/2024_08_09_01_58_26/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0.001)_BS(256)_DT(1)_latestcheckpoint.pth
+output/2024_08_09_03_46_16/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0.001)_BS(256)_DT(1)_best.pth
+output/2024_08_09_03_46_16/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0.001)_BS(256)_DT(1)_latestcheckpoint.pth
+output/2024_08_10_01_59_20/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0.001)_BS(1024)_DT(1)_best.pth
+output/2024_08_10_01_59_20/M(GTZANContrastiveModelLarge)_CONTDIM(128)_KS(3)_LR(0.001)_BS(1024)_DT(1)_latestcheckpoint.pth

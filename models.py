@@ -236,6 +236,53 @@ class GTZANContrastiveModelXLarge(nn.Module):
         return self.projective_head(self.backbone(x))
             
 
+class BarlowTwinContrastive(nn.Module):
+    def __init__(self, contrastive_dim=128):
+        super(BarlowTwinContrastive, self).__init__()
+        self.relu = nn.ReLU()
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.dropout = nn.Dropout(p=0.5)
+        self.kernel_size = 3
+
+        self.conv_layers = []
+        self.conv1 = nn.Conv2d(1, 32, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv1, self.relu, nn.BatchNorm2d(32), self.pool])
+        self.conv2 = nn.Conv2d(32, 64, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv2, self.relu, nn.BatchNorm2d(64), self.pool])
+        self.conv3 = nn.Conv2d(64, 128, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv3, self.relu, nn.BatchNorm2d(128), self.pool])
+        self.conv4 = nn.Conv2d(128, 256, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv4, self.relu, nn.BatchNorm2d(256), self.pool])
+        self.conv5 = nn.Conv2d(256, 512, kernel_size = self.kernel_size, stride=1, padding=1)
+        self.conv_layers.extend([self.conv5, self.relu, nn.BatchNorm2d(512), self.pool])
+        
+        self.conv_layers = nn.Sequential(*self.conv_layers)
+
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(13312, 1024)
+
+        self.backbone = nn.Sequential(
+            self.conv_layers,
+            self.flatten,
+            self.fc1,
+            self.relu,
+            self.dropout
+        )
+
+        self.projective_head = nn.Linear(1024, contrastive_dim)
+        self.name = f"M(BarlowTwinContrastive)_CONTDIM({contrastive_dim})_KS({self.kernel_size})"
+
+    def forward(self, x):
+        x1 = x[0]
+        x2 = x[1]
+        z1 = self.projective_head(self.backbone(x1))
+        z2 = self.projective_head(self.backbone(x2))
+        return z1,z2
+        
+    def inference(self, x):
+        return self.projective_head(self.backbone(x))
+
+
 # Construct a new model that has the contrastive embedding model as a frozen base
 class ContrastiveClassificationModel(nn.Module):
     def __init__(self, base_model, num_classes, embedding_dim=128):
@@ -293,51 +340,3 @@ class ContrastiveClassificationModel_3(nn.Module):
         x = self.fc3(x) 
         return x
     
-
-
-class BarlowTwinContrastive(nn.Module):
-    def __init__(self, contrastive_dim=128):
-        super(BarlowTwinContrastive, self).__init__()
-        self.relu = nn.ReLU()
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.dropout = nn.Dropout(p=0.5)
-        self.kernel_size = 3
-
-        self.conv_layers = []
-        self.conv1 = nn.Conv2d(1, 32, kernel_size = self.kernel_size, stride=1, padding=1)
-        self.conv_layers.extend([self.conv1, self.relu, nn.BatchNorm2d(32), self.pool])
-        self.conv2 = nn.Conv2d(32, 64, kernel_size = self.kernel_size, stride=1, padding=1)
-        self.conv_layers.extend([self.conv2, self.relu, nn.BatchNorm2d(64), self.pool])
-        self.conv3 = nn.Conv2d(64, 128, kernel_size = self.kernel_size, stride=1, padding=1)
-        self.conv_layers.extend([self.conv3, self.relu, nn.BatchNorm2d(128), self.pool])
-        self.conv4 = nn.Conv2d(128, 256, kernel_size = self.kernel_size, stride=1, padding=1)
-        self.conv_layers.extend([self.conv4, self.relu, nn.BatchNorm2d(256), self.pool])
-        self.conv5 = nn.Conv2d(256, 512, kernel_size = self.kernel_size, stride=1, padding=1)
-        self.conv_layers.extend([self.conv5, self.relu, nn.BatchNorm2d(512), self.pool])
-        
-        self.conv_layers = nn.Sequential(*self.conv_layers)
-
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(13312, 1024)
-
-        self.backbone = nn.Sequential(
-            self.conv_layers,
-            self.flatten,
-            self.fc1,
-            self.relu,
-            self.dropout
-        )
-
-        self.projective_head = nn.Linear(1024, contrastive_dim)
-        self.name = f"M(BarlowTwinContrastive)_CONTDIM({contrastive_dim})_KS({self.kernel_size})"
-
-    def forward(self, x):
-            
-        x1 = x[0]
-        x2 = x[1]
-        z1 = self.projective_head(self.backbone(x1))
-        z2 = self.projective_head(self.backbone(x2))
-        return z1,z2
-        
-    def inference(self, x):
-        return self.projective_head(self.backbone(x))
